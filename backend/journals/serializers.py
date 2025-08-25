@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Journal, Tag
+from .models import Journal, Tag, Comment
 
 
 # Serializer for Tag model
@@ -59,3 +59,12 @@ class JournalSerializer(serializers.ModelSerializer):
         if tags is not None:
             instance.tags.set(tags)
         return instance
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source="user.username")
+    journal = serializers.PrimaryKeyRelatedField(queryset=Journal.objects.all(), required=False)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "journal", "user", "text", "created_at", "updated_at"]
+        read_only_fields = ["user", "created_at", "updated_at"]

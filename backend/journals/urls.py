@@ -1,11 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import JournalViewSet, TagViewSet
+from .views import JournalViewSet, TagViewSet, CommentViewSet
 
 # Use router for journals + tags
 router = DefaultRouter()
 router.register(r"journals", JournalViewSet, basename="journal")
 router.register(r"tags", TagViewSet, basename="tag")
+router.register(r"comments", CommentViewSet, basename="comment")
 
 urlpatterns = [
     path("", include(router.urls)),
