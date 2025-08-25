@@ -1,28 +1,50 @@
-from rest_framework import generics, permissions
-from .models import Journal
-from .serializers import JournalSerializer
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import Journal, Tag
+from .serializers import JournalSerializer, TagSerializer
 
-# List & Create Journals (user-specific)
-class JournalListCreateView(generics.ListCreateAPIView):
+
+class JournalViewSet(viewsets.ModelViewSet):
     serializer_class = JournalSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    # Only show journals of the logged-in user
     def get_queryset(self):
-        return Journal.objects.filter(user=self.request.user)
+        if self.request.user.is_authenticated:
+            return Journal.objects.filter(user=self.request.user)
+        return Journal.objects.none()
 
+    # Assign logged-in user as journal owner
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-# Retrieve, Update, Delete a single journal
-class JournalDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = JournalSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    # 👍 Like a journal
+    @action(
+        detail=True,              # <--- make sure this is True
+        methods=["post"],
+        url_path="like",          # <--- ensures URL is journals/{id}/like/
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def like(self, request, pk=None):
+        journal = self.get_object()
+        journal.likes.add(request.user)
+        return Response({"message": "Liked successfully", "total_likes": journal.total_likes()})
 
-    def get_queryset(self):
-        return Journal.objects.filter(user=self.request.user)
+    # 👎 Unlike a journal
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="unlike",        # <--- ensures URL is journals/{id}/unlike/
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def unlike(self, request, pk=None):
+        journal = self.get_object()
+        journal.likes.remove(request.user)
+        return Response({"message": "Unliked successfully", "total_likes": journal.total_likes()})
 
-# Public Journals (anyone can view)
-class PublicJournalListView(generics.ListAPIView):
-    serializer_class = JournalSerializer
-    permission_classes = [permissions.AllowAny]
-    queryset = Journal.objects.filter(privacy='public')
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
