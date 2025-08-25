@@ -32,3 +32,14 @@ class Journal(models.Model):
     
     def total_likes(self):
         return self.likes.count()
+    
+class Comment(models.Model):
+    journal = models.ForeignKey('Journal', on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        short = (self.text[:40] + '…') if len(self.text) > 40 else self.text
+        return f"Comment by {self.user.username} on {self.journal.title}: {short}"
