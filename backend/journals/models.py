@@ -17,6 +17,9 @@ class Journal(models.Model):
     # 📸 New field for image uploads
     image = models.ImageField(upload_to="journal_images/", blank=True, null=True)
 
+    #New field for trip route
+    route = models.JSONField(blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

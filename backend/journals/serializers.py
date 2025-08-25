@@ -9,5 +9,6 @@ class JournalSerializer(serializers.ModelSerializer):
         fields = [
             "id", "user", "title", "description",
             "start_date", "end_date", "privacy",
-            "image", "created_at", "updated_at"
+            "image", "route",
+            "created_at", "updated_at"
         ]
