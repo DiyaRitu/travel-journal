@@ -4,7 +4,16 @@ import { AuthContext } from "./AuthContext";
 import api from "../api";
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [authTokens, setAuthTokens] = useState(() =>
+    localStorage.getItem("authTokens")
+      ? JSON.parse(localStorage.getItem("authTokens"))
+      : null
+  );
+  const [user, setUser] = useState(() =>
+    localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user"))
+      : null
+  );
 
   // Register a new user
   const register = async (userData) => {
@@ -22,10 +31,16 @@ export const AuthProvider = ({ children }) => {
 
       const { access, refresh } = response.data;
 
-      localStorage.setItem("access", access);
-      localStorage.setItem("refresh", refresh);
-
+      const tokens = { access, refresh };
+      setAuthTokens(tokens);
       setUser({ username: credentials.username });
+
+      localStorage.setItem("authTokens", JSON.stringify(tokens));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ username: credentials.username })
+      );
+
       return response.data;
     } catch (error) {
       console.error("Login error:", error.response?.data || error.message);
@@ -35,24 +50,27 @@ export const AuthProvider = ({ children }) => {
 
   // Logout user
   const logout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
+    localStorage.removeItem("authTokens");
+    localStorage.removeItem("user");
+    setAuthTokens(null);
     setUser(null);
   };
 
-  // Restore user if token exists
+  // Restore user & tokens on refresh
   useEffect(() => {
-    const token = localStorage.getItem("access");
-    if (token) {
-      setUser({ username: "persistedUser" });
+    if (localStorage.getItem("authTokens")) {
+      setAuthTokens(JSON.parse(localStorage.getItem("authTokens")));
+    }
+    if (localStorage.getItem("user")) {
+      setUser(JSON.parse(localStorage.getItem("user")));
     }
   }, []);
 
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!authTokens;
 
   return (
     <AuthContext.Provider
-      value={{ user, register, login, logout, isAuthenticated }}
+      value={{ user, authTokens, register, login, logout, isAuthenticated }}
     >
       {children}
     </AuthContext.Provider>
